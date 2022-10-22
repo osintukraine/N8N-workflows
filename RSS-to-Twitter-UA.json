@@ -1,0 +1,242 @@
+{
+  "meta": {
+    "instanceId": "7f05ab6eb44dc914a524d78f87a95e801b127df0b6a26ad5345bec449677d836"
+  },
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -1980,
+        120
+      ],
+      "id": "fce5646b-c32a-4fb0-bebf-7c091e81128d"
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 1
+            }
+          ]
+        }
+      },
+      "name": "Cron2",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        100
+      ],
+      "id": "e090498b-e047-4c5a-b409-2bd829f9f9a6"
+    },
+    {
+      "parameters": {
+        "url": "https://ukraine.osintukraine.com/index.xml"
+      },
+      "name": "RSS Feed Read3",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        100
+      ],
+      "id": "932aca76-3da1-4f3d-a12d-5efa857c1b6b",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "text": "={{$json[\"Tweet\"]}} \nSource : {{$json[\"Link\"]}} \nMedia link : {{$json[\"Media\"]}}",
+        "additionalFields": {}
+      },
+      "name": "Twitter2",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        560
+      ],
+      "executeOnce": false,
+      "retryOnFail": false,
+      "id": "44eb6590-d4bc-4527-afb7-617e68ed6919",
+      "credentials": {
+        "twitterOAuth1Api": {
+          "id": "27",
+          "name": "BenB News"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "name": "Wait4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        560
+      ],
+      "webhookId": "0ac08558-ed7c-4654-9f2d-794d84f00488",
+      "id": "ec25fb12-caff-454c-bb64-fb313d65fdad"
+    },
+    {
+      "parameters": {
+        "batchSize": 2,
+        "options": {}
+      },
+      "name": "SplitInBatches4",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        -1500,
+        560
+      ],
+      "retryOnFail": true,
+      "id": "7058aaaf-7775-4dba-872c-1a955a720569",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "const staticData = getWorkflowStaticData('global');\nconst newRSSIds = items.map(item => item.json[\"Date\"]);\nconst oldRSSIds = staticData.oldRSSIds; \n\nif (!oldRSSIds) {\n  staticData.oldRSSIds = newRSSIds;\n  return items;\n}\n\n\nconst actualNewRSSIds = newRSSIds.filter((id) => !oldRSSIds.includes(id));\nconst actualNewRSS = items.filter((data) => actualNewRSSIds.includes(data.json['Date']));\nstaticData.oldRSSIds = [...actualNewRSSIds, ...oldRSSIds];\n\nreturn actualNewRSS;\n"
+      },
+      "name": "Function2",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -1180,
+        320
+      ],
+      "id": "55b7799a-6ab3-4a1c-9fac-1ab717348089"
+    },
+    {
+      "parameters": {
+        "url": ""
+      },
+      "name": "RSS Feed Read4",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1800,
+        360
+      ],
+      "id": "cb698316-24d2-415c-b45a-d8bb615a4f04"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "Tweet",
+              "value": "={{ $json[\"content\"].slice(0,200)}}"
+            },
+            {
+              "name": "Link",
+              "value": "={{ $json[\"link\"] }}"
+            },
+            {
+              "name": "Media",
+              "value": "={{$json[\"enclosure\"][\"url\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -1500,
+        320
+      ],
+      "id": "6dde8920-1e2f-4b57-9f01-36d033d8c76f"
+    }
+  ],
+  "connections": {
+    "Cron2": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed Read3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Read3": {
+      "main": [
+        [
+          {
+            "node": "Set1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter2": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches4": {
+      "main": [
+        [
+          {
+            "node": "Twitter2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function2": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set1": {
+      "main": [
+        [
+          {
+            "node": "Function2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "meta": {
+    "instanceId": "7f05ab6eb44dc914a524d78f87a95e801b127df0b6a26ad5345bec449677d836"
+  },
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        360,
+        360
+      ],
+      "id": "9cc521f6-a278-4418-8eac-9effc7eb5cae"
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 1
+            }
+          ]
+        }
+      },
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        620,
+        360
+      ],
+      "id": "833ab711-6ff2-41fe-99cb-982b7cfafcb8"
+    },
+    {
+      "parameters": {
+        "text": "={{$json[\"Tweet\"]}} \nSource : {{$json[\"Link\"]}} \nMedia : {{$json[\"Media\"]}}",
+        "additionalFields": {}
+      },
+      "name": "Twitter",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        820
+      ],
+      "executeOnce": false,
+      "retryOnFail": false,
+      "id": "c2fcdb7e-66ac-48d9-9669-8691f2d98f02",
+      "credentials": {
+        "twitterOAuth1Api": {
+          "id": "11",
+          "name": "telehuntwatch"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        820
+      ],
+      "webhookId": "0ac08558-ed7c-4654-9f2d-794d84f00488",
+      "id": "84420a72-3428-43f1-86dc-4372ab53ae12"
+    },
+    {
+      "parameters": {
+        "batchSize": 2,
+        "options": {}
+      },
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        820,
+        820
+      ],
+      "retryOnFail": true,
+      "id": "7e60c99c-dff0-4553-b382-d091cb04f6ed",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "const staticData = getWorkflowStaticData('global');\nconst newRSSIds = items.map(item => item.json[\"Date\"]);\nconst oldRSSIds = staticData.oldRSSIds; \n\nif (!oldRSSIds) {\n  staticData.oldRSSIds = newRSSIds;\n  return items;\n}\n\n\nconst actualNewRSSIds = newRSSIds.filter((id) => !oldRSSIds.includes(id));\nconst actualNewRSS = items.filter((data) => actualNewRSSIds.includes(data.json['Date']));\nstaticData.oldRSSIds = [...actualNewRSSIds, ...oldRSSIds];\n\nreturn actualNewRSS;\n"
+      },
+      "name": "Function",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        580
+      ],
+      "id": "bc0f6fa5-c7a1-4deb-b486-ece0f9357087"
+    },
+    {
+      "parameters": {
+        "url": ""
+      },
+      "name": "RSS Feed Read1",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        520,
+        700
+      ],
+      "id": "f07eb762-ac8b-43d7-9655-3573ce86b50c",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "Tweet",
+              "value": "={{ $json[\"content\"].slice(0,200)}}"
+            },
+            {
+              "name": "Link",
+              "value": "={{ $json[\"link\"] }}"
+            },
+            {
+              "name": "Media",
+              "value": "={{$json[\"enclosure\"][\"url\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        820,
+        580
+      ],
+      "id": "8ff2428c-34d3-46b4-bdd3-8b0a41f68692"
+    },
+    {
+      "parameters": {
+        "url": "https://russia.osintukraine.com/index.xml"
+      },
+      "name": "RSS Feed Read2",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        360
+      ],
+      "id": "d496ef8c-b4b8-40cf-8e64-fd9f90f0669e",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed Read2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Read2": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,334 @@
+{
+  "meta": {
+    "instanceId": "7f05ab6eb44dc914a524d78f87a95e801b127df0b6a26ad5345bec449677d836"
+  },
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -1780,
+        840
+      ],
+      "id": "c2a85e83-e9c4-4aa2-b850-d62953358648"
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 45,
+              "unit": "minutes"
+            }
+          ]
+        }
+      },
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -2100,
+        520
+      ],
+      "id": "b33f31d0-4006-4d68-b4c0-653b9295f964"
+    },
+    {
+      "parameters": {
+        "functionCode": "const staticData = getWorkflowStaticData('global');\nconst newRSSIds = items.map(item => item.json[\"Date\"]);\nconst oldRSSIds = staticData.oldRSSIds; \n\nif (!oldRSSIds) {\n  staticData.oldRSSIds = newRSSIds;\n  return items;\n}\n\n\nconst actualNewRSSIds = newRSSIds.filter((id) => !oldRSSIds.includes(id));\nconst actualNewRSS = items.filter((data) => actualNewRSSIds.includes(data.json['Date']));\nstaticData.oldRSSIds = [...actualNewRSSIds, ...oldRSSIds];\n\nreturn actualNewRSS;\n"
+      },
+      "name": "Function",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -1540,
+        360
+      ],
+      "id": "1440230a-3309-43c3-9d20-f4747dbf1860"
+    },
+    {
+      "parameters": {
+        "url": "https://www.inoreader.com/stream/user/1005324229/tag/Telegram"
+      },
+      "name": "RSS Feed Read",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1860,
+        520
+      ],
+      "id": "2047c846-98b6-454d-8b43-391b45071458"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -1560,
+        520
+      ],
+      "id": "744b2cc8-f2ec-43d8-8a10-02be1b1ae29a"
+    },
+    {
+      "parameters": {
+        "chatId": "@telehunt_broadcast",
+        "text": "=TRANSLATION :\n{{$json[\"text\"]}}\nLink : {{$json[\"link\"]}}",
+        "additionalFields": {}
+      },
+      "name": "Telegram1",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        -820,
+        800
+      ],
+      "typeVersion": 1,
+      "executeOnce": false,
+      "retryOnFail": true,
+      "id": "d6a78770-44cb-42dd-b8ea-6817b964b3a2",
+      "credentials": {
+        "telegramApi": {
+          "id": "3",
+          "name": "telehunt_broadcast"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "SplitInBatches5",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        800
+      ],
+      "retryOnFail": true,
+      "id": "b75da49e-8628-484a-b381-4d5fde66a27e",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "name": "Wait5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        800
+      ],
+      "webhookId": "1b4a47f3-6a63-4688-b70d-6a26c6cd722e",
+      "id": "5d97ef63-b38e-4753-8f20-bc87f3e38b10"
+    },
+    {
+      "parameters": {
+        "text": "={{$json[\"title\"]}}",
+        "translateTo": "EN-US",
+        "additionalFields": {}
+      },
+      "name": "DeepL1",
+      "type": "n8n-nodes-base.deepL",
+      "typeVersion": 1,
+      "position": [
+        -1260,
+        280
+      ],
+      "retryOnFail": true,
+      "id": "f2f28e2b-0c9f-44b4-82df-7e048a81c53d",
+      "credentials": {
+        "deepLApi": {
+          "id": "4",
+          "name": "DeepL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex"
+      },
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        500
+      ],
+      "id": "410c3a2f-0ea9-4ad1-9be7-10b2f24bb765"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "databaseId": 96,
+        "tableId": 474,
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": 3550,
+              "fieldValue": "={{$json[\"creator\"]}}"
+            },
+            {
+              "fieldId": 3554,
+              "fieldValue": "={{$json[\"content\"]}}"
+            },
+            {
+              "fieldId": 3555,
+              "fieldValue": "={{$json[\"contentSnippet\"]}}"
+            },
+            {
+              "fieldId": 3556,
+              "fieldValue": "={{$json[\"isoDate\"]}}"
+            },
+            {
+              "fieldId": 3557,
+              "fieldValue": "={{$json[\"link\"]}}"
+            },
+            {
+              "fieldId": 3553,
+              "fieldValue": "={{$json[\"title\"]}}"
+            },
+            {
+              "fieldId": 3558,
+              "fieldValue": "={{$json[\"text\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Baserow1",
+      "type": "n8n-nodes-base.baserow",
+      "typeVersion": 1,
+      "position": [
+        -580,
+        500
+      ],
+      "retryOnFail": true,
+      "id": "f13f3cb5-404f-4698-a361-bda3f7822e27",
+      "credentials": {
+        "baserowApi": {
+          "id": "15",
+          "name": "Baserow account"
+        }
+      },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "DeepL1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Feed Read": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram1": {
+      "main": [
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches5": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait5": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepL1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Baserow1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SplitInBatches5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
